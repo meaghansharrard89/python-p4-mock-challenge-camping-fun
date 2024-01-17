@@ -25,11 +25,14 @@ class Activity(db.Model, SerializerMixin):
     difficulty = db.Column(db.Integer)
 
     # Add relationship
+
     signups = db.relationship(
         "Signup", back_populates="activity", cascade="all, delete-orphan"
     )
+    campers = association_proxy("signups", "camper")
 
     # Add serialization rules
+
     serialize_rules = ("-signups.activity",)
 
     def __repr__(self):
@@ -47,11 +50,14 @@ class Camper(db.Model, SerializerMixin):
     signups = db.relationship(
         "Signup", back_populates="camper", cascade="all, delete-orphan"
     )
+    activities = association_proxy("signups", "activity")
 
     # Add serialization rules
+
     serialize_rules = ("-signups.camper",)
 
     # Add validation
+
     @validates("name")
     def validate_name(self, key, value):
         if not value:
@@ -74,24 +80,30 @@ class Signup(db.Model, SerializerMixin):
     id = db.Column(db.Integer, primary_key=True)
     time = db.Column(db.Integer)
 
-    # Add relationships
-    camper_id = db.Column(db.Integer, db.ForeignKey("campers.id"))
-    activity_id = db.Column(db.Integer, db.ForeignKey("activities.id"))
+    # Add foreign keys
 
-    camper = db.relationship("Camper", back_populates="signups")
+    activity_id = db.Column(db.Integer, db.ForeignKey("activities.id"))
+    camper_id = db.Column(db.Integer, db.ForeignKey("campers.id"))
+
+    # Add relationships
+
     activity = db.relationship("Activity", back_populates="signups")
+    camper = db.relationship("Camper", back_populates="signups")
 
     # Add serialization rules
-    serialize_rules = ("-camper.signups", "-activity.signups")
+
+    serialize_rules = (
+        "-activity.signups",
+        "-camper.signups",
+    )
+
+    # Add validation
 
     @validates("time")
-    def validate_time(self, key, time):
-        if not 0 <= time <= 23:
+    def validate_time(self, key, value):
+        if not 0 <= value <= 23:
             raise ValueError("Time must be within limits")
-        return time
+        return value
 
     def __repr__(self):
         return f"<Signup {self.id}>"
-
-
-# add any models you may need.
