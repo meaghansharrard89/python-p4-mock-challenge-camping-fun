@@ -47,6 +47,7 @@ class Camper(db.Model, SerializerMixin):
     age = db.Column(db.Integer)
 
     # Add relationship
+
     signups = db.relationship(
         "Signup", back_populates="camper", cascade="all, delete-orphan"
     )
@@ -61,14 +62,16 @@ class Camper(db.Model, SerializerMixin):
     @validates("name")
     def validate_name(self, key, value):
         if not value:
-            raise ValueError("Camper must have a name.")
-        return value
+            raise ValueError("Camper must have a name")
+        else:
+            return value
 
     @validates("age")
     def validate_age(self, key, value):
-        if value < 8 or value > 18:
-            raise ValueError("Camper's age must be between 8 and 18.")
-        return value
+        if 8 < value < 18:
+            return value
+        else:
+            raise ValueError("Camper's age must be between 8 and 18 years")
 
     def __repr__(self):
         return f"<Camper {self.id}: {self.name}>"
@@ -101,23 +104,24 @@ class Signup(db.Model, SerializerMixin):
 
     @validates("time")
     def validate_time(self, key, value):
-        if not 0 <= value <= 23:
-            raise ValueError("Time must be within limits")
+        if 0 < value <= 23:
+            return value
+        else:
+            raise ValueError("Signup time must a valid time of day")
+
+    @validates("camper_id")
+    def validate_camper_id(self, key, value):
+        camper = Camper.query.get(value)
+        if not camper:
+            raise ValueError("Camper must exist")
         return value
 
-    # @validates("camper_id")
-    # def validate_camper_id(self, key, value):
-    #     camper = Camper.query.get(value)
-    #     if not camper:
-    #         raise ValueError("Camper must exist")
-    #     return value
-
-    # @validates("activity_id")
-    # def validate_activity_id(self, key, value):
-    #     activity = Activity.query.get(value)
-    #     if not activity:
-    #         raise ValueError("Activity must exist")
-    #     return value
+    @validates("activity_id")
+    def validate_activity_id(self, key, value):
+        activity = Activity.query.get(value)
+        if not activity:
+            raise ValueError("Activity must exist")
+        return value
 
     def __repr__(self):
         return f"<Signup {self.id}>"
